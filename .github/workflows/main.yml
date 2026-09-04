@@ -1,0 +1,31 @@
+name: SQL Database Workflow
+
+on:
+
+  push:
+
+    branches: [ "main" ]
+
+  pull_request:
+
+    branches: [ "main" ]
+
+jobs:
+
+  database-check:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+
+        uses: actions/checkout@v4
+
+      - name: Check SQL files
+
+        run: |
+
+          echo "Checking SQL database files..."
+
+          find . -name "*.sql"
