@@ -11,40 +11,24 @@ namespace RaceDayApi.Controllers;
 [ApiController]
 
 [Route("api/enrolments")]
-
-
 public class RegistrationsController : ControllerBase
-
 {
-
     private readonly RaceDayContext _db;
-
     public RegistrationsController(RaceDayContext db)
-
     {
-
         _db = db;
-
     }
-
     [HttpGet]
-
     public async Task<IActionResult> GetAll()
-
     {
-
         return Ok(await _db.Registrations
 
             .AsNoTracking().ToListAsync());
 
     }
-
     [HttpPost]
-
     public async Task<IActionResult> Create(Registration registration)
-
     {
-
         if (string.IsNullOrWhiteSpace(registration.Registration_ID))
 
             return BadRequest("Registration ID is required.");
@@ -100,11 +84,8 @@ public class RegistrationsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-
     public async Task<IActionResult> Delete(string id)
-
     {
-
         var registration = await _db.Registrations.FindAsync(id);
 
         if (registration == null)

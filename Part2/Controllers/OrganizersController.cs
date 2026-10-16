@@ -15,49 +15,34 @@ namespace RaceDayApi.Controllers;
 [Authorize(Roles = "Organiser")]
 
 public class OrganizersController : ControllerBase
-
 {
-
     private readonly RaceDayContext _db;
-
     public OrganizersController(RaceDayContext db)
-
     {
-
         _db = db;
-
     }
-
     [HttpGet]
 
     public async Task<IActionResult> GetAll()
-
     {
-
         return Ok(await _db.EventOrganizers
 
             .AsNoTracking().ToListAsync());
-
     }
 
     [HttpGet("{id}")]
 
     public async Task<IActionResult> GetById(string id)
-
     {
-
         var organizer = await _db.EventOrganizers.FindAsync(id);
 
         return organizer == null ? NotFound() : Ok(organizer);
-
     }
 
     [HttpPost]
 
     public async Task<IActionResult> Create(EventOrganizer organizer)
-
     {
-
         if (string.IsNullOrWhiteSpace(organizer.Event_Organizer_ID))
 
             return BadRequest("Organizer ID is required.");
@@ -115,25 +100,17 @@ public class OrganizersController : ControllerBase
     [HttpDelete("{id}")]
 
     public async Task<IActionResult> Delete(string id)
-
     {
-
         var organizer = await _db.EventOrganizers.FindAsync(id);
 
         if (organizer == null)
 
             return NotFound();
-
         if (await _db.RaceEvents.AnyAsync(
-
             e => e.EventOrganizerID == id))
-
             return Conflict("This organizer still manages events.");
-
         _db.EventOrganizers.Remove(organizer);
-
         await _db.SaveChangesAsync();
-
         return NoContent();
 
     }

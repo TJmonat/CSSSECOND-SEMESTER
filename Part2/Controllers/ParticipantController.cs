@@ -15,42 +15,23 @@ namespace RaceDayApi.Controllers;
 
 [Route("api/participants")]
 [Authorize(Roles = "Participant")]
-
-
 public class ParticipantsController : ControllerBase
-
 {
-
     private readonly RaceDayContext _db;
-
     public ParticipantsController(RaceDayContext db)
-
     {
-
         _db = db;
-
     }
-
    
-
     [HttpGet]
 
     public async Task<IActionResult> GetAll()
-
     {
-
         return Ok(await _db.Participants.AsNoTracking().ToListAsync());
-
     }
-
-    
-
     [HttpGet("{id}")]
-
     public async Task<IActionResult> GetById(string id)
-
     {
-
         var participant = await _db.Participants.FindAsync(id);
 
         if (participant == null)
@@ -60,13 +41,8 @@ public class ParticipantsController : ControllerBase
         return Ok(participant);
 
     }
-
-    
-
     [HttpPost]
-
     public async Task<IActionResult> Create(Participant participant)
-
     {
 
         if (string.IsNullOrWhiteSpace(participant.Participant_ID))
@@ -104,11 +80,7 @@ public class ParticipantsController : ControllerBase
             participant);
 
     }
-
-   
-
     [HttpPut("{id}")]
-
     public async Task<IActionResult> Update(
 
         string id, Participant updated)
@@ -142,15 +114,10 @@ public class ParticipantsController : ControllerBase
         return Ok(participant);
 
     }
-
-    
-
     [HttpDelete("{id}")]
-
     public async Task<IActionResult> Delete(string id)
 
     {
-
         var participant = await _db.Participants.FindAsync(id);
 
         if (participant == null)

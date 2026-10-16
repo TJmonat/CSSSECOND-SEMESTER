@@ -20,13 +20,10 @@ public class AuthController : ControllerBase
         public AuthController(
             RaceDayContext db,
             IPasswordHasher<UserAccount> hasher)
-
         {
-
             _db = db;
 
             _hasher = hasher;
-
         }
 
         [HttpPost("register")]
@@ -74,11 +71,9 @@ public class AuthController : ControllerBase
             try
 
             {
-
                 var account = new UserAccount
 
                 {
-
                     Email = email,
 
                     UserRole = role
@@ -88,11 +83,9 @@ public class AuthController : ControllerBase
                 if (role == "Participant")
 
                 {
-
                     _db.Participants.Add(new Participant
 
                     {
-
                         Participant_ID = profileId,
 
                         Participant_Name = request.Name.Trim(),
@@ -110,11 +103,9 @@ public class AuthController : ControllerBase
                 else
 
                 {
-
                     _db.EventOrganizers.Add(new EventOrganizer
 
                     {
-
                         Event_Organizer_ID = profileId,
 
                         Event_Organizer_Name = request.Name.Trim(),

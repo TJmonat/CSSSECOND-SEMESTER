@@ -15,40 +15,23 @@ namespace RaceDayApi.Controllers;
 public class EventsController : ControllerBase
 
 {
+private readonly RaceDayContext _db;
+public EventsController(RaceDayContext db)
 
-    private readonly RaceDayContext _db;
-
-    public EventsController(RaceDayContext db)
-
-    {
-
-        _db = db;
-
-    }
-
-    
-
-    [HttpGet]
-
+{
+ _db = db;
+}
+[HttpGet]
     public async Task<IActionResult> GetAll()
-
     {
-
         var events = await _db.RaceEvents.AsNoTracking().ToListAsync();
-
         return Ok(events);
-
     }
-
-    
-
     [HttpGet("{id}")]
-
     public async Task<IActionResult> GetById(string id)
 
     {
-
-        var raceEvent = await _db.RaceEvents.FindAsync(id);
+       var raceEvent = await _db.RaceEvents.FindAsync(id);
 
         if (raceEvent == null)
 
@@ -58,7 +41,6 @@ public class EventsController : ControllerBase
 
     }
 
-  
 
     [HttpPost]
 

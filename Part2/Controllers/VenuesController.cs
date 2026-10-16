@@ -11,49 +11,29 @@ namespace RaceDayApi.Controllers;
 [ApiController]
 
 [Route("api/venues")]
-
 public class VenuesController : ControllerBase
-
 {
-
     private readonly RaceDayContext _db;
-
     public VenuesController(RaceDayContext db)
-
     {
-
         _db = db;
-
     }
-
     [HttpGet]
-
     public async Task<IActionResult> GetAll()
-
     {
-
         return Ok(await _db.Venues.AsNoTracking().ToListAsync());
-
     }
 
     [HttpGet("{id}")]
-
     public async Task<IActionResult> GetById(string id)
-
     {
-
         var venue = await _db.Venues.FindAsync(id);
-
         return venue == null ? NotFound() : Ok(venue);
-
     }
-
     [HttpPost]
 
     public async Task<IActionResult> Create(Venue venue)
-
     {
-
         if (string.IsNullOrWhiteSpace(venue.Venue_ID))
 
             return BadRequest("Venue ID is required.");
@@ -77,11 +57,8 @@ public class VenuesController : ControllerBase
     }
 
     [HttpPut("{id}")]
-
     public async Task<IActionResult> Update(string id, Venue updated)
-
     {
-
         var venue = await _db.Venues.FindAsync(id);
 
         if (venue == null)
@@ -95,15 +72,10 @@ public class VenuesController : ControllerBase
         await _db.SaveChangesAsync();
 
         return Ok(venue);
-
     }
-
     [HttpDelete("{id}")]
-
     public async Task<IActionResult> Delete(string id)
-
     {
-
         var venue = await _db.Venues.FindAsync(id);
 
         if (venue == null)

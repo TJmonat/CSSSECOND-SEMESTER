@@ -15,39 +15,26 @@ namespace RaceDayApi.Controllers;
 public class CategoriesController : ControllerBase
 
 {
-
     private readonly RaceDayContext _db;
-
     public CategoriesController(RaceDayContext db)
-
     {
-
         _db = db;
-
     }
-
     [HttpGet]
-
     public async Task<IActionResult> GetAll()
-
     {
-
         return Ok(await _db.EventCategories
 
             .AsNoTracking().ToListAsync());
-
     }
 
     [HttpGet("{id}")]
 
     public async Task<IActionResult> GetById(string id)
-
     {
-
         var category = await _db.EventCategories.FindAsync(id);
 
         return category == null ? NotFound() : Ok(category);
-
     }
 
     [HttpPost]
@@ -55,7 +42,6 @@ public class CategoriesController : ControllerBase
     public async Task<IActionResult> Create(EventCategory category)
 
     {
-
         if (string.IsNullOrWhiteSpace(category.Category_ID))
 
             return BadRequest("Category ID is required.");
