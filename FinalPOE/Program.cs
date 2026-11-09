@@ -1,175 +1,62 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-using Microsoft.AspNetCore.Identity;
-
-using Microsoft.EntityFrameworkCore;
-
-using RaceDayAP1.Data;
-
-using RaceDayAP1.Models;
-
-using Microsoft.OpenApi;
-
-using RaceDayAP1.Services;
-
-using Azure.Storage.Blobs;
-
-var builder = WebApplication.CreateBuilder(args);
-
-
-
-var azureConnectionString =
-
-    builder.Configuration["AzureBlobStorage:ConnectionString"];
-
-if (string.IsNullOrWhiteSpace(azureConnectionString))
-
+namespace RaceDayMVC
 {
-
-    throw new InvalidOperationException(
-
-        "Azure Blob Storage connection string is missing.");
-
-}
-
-builder.Services.AddSingleton(
-
-    new BlobServiceClient(azureConnectionString));
-
-builder.Services.AddScoped<AzureBlobStorageService>();
-
-
-builder.Services
-
-    .AddAuthentication("RaceDay.Auth")
-
-    .AddCookie("RaceDay.Auth", options =>
-
+    public class Program
     {
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
 
-        options.Cookie.Name = "RaceDay.Auth";
-
+            // Add services to the container.
+            builder.Services.AddControllersWithViews();
+            builder.Services.AddAuthentication(
+    CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
         options.Cookie.HttpOnly = true;
-
-        options.Cookie.SecurePolicy =
-
-            CookieSecurePolicy.Always;
-
-        options.Cookie.SameSite = SameSiteMode.Lax;
-
-        options.SlidingExpiration = true;
-
-        options.ExpireTimeSpan =
-
-            TimeSpan.FromMinutes(30);
-
-        options.Events.OnRedirectToLogin = context =>
-
-        {
-
-            context.Response.StatusCode =
-
-                StatusCodes.Status401Unauthorized;
-
-            return Task.CompletedTask;
-
-        };
-
-        options.Events.OnRedirectToAccessDenied = context =>
-
-        {
-
-            context.Response.StatusCode =
-
-                StatusCodes.Status403Forbidden;
-
-            return Task.CompletedTask;
-
-        };
-
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     });
+            builder.Services.AddAuthorization();
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+               options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            });
+            builder.Services.AddHttpClient("RaceDayAPI", client =>
+            {
+                client.BaseAddress = new Uri(
+                    builder.Configuration["ApiSettings:BaseUrl"]!
+                );
+            });
 
-builder.Services.AddAuthorization();
+            var app = builder.Build();
 
+            // Configure the HTTP request pipeline.
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseExceptionHandler("/Home/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+            }
 
-builder.Services.AddScoped<
+            app.UseHttpsRedirection();
+            app.UseRouting();
+            app.UseSession();
+            app.UseAuthentication();
+            app.UseAuthorization();
+          
+            app.MapStaticAssets();
+            app.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}")
+                .WithStaticAssets();
 
-    IPasswordHasher<UserAccount>,
-
-    PasswordHasher<UserAccount>>();
-
-builder.Services.AddControllers();
-
-
-builder.Services.AddDbContext<RaceDayContext>(options =>
-
-    options.UseSqlServer(
-
-        builder.Configuration.GetConnectionString(
-
-            "DefaultConnection")));
-
-
-
-builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddSwaggerGen(options =>
-
-{
-
-    options.AddSecurityDefinition("RaceDay.Auth",
-
-        new OpenApiSecurityScheme
-
-        {
-
-            Name = "RaceDay.Auth",
-
-            Type = SecuritySchemeType.ApiKey,
-
-            In = ParameterLocation.Cookie,
-
-            Description = "RaceDay authentication cookie"
-
-        });
-
-    options.AddSecurityRequirement(document =>
-
-        new OpenApiSecurityRequirement
-
-        {
-
-            [new OpenApiSecuritySchemeReference(
-
-                "RaceDay.Auth", document)] = new List<string>()
-
-        });
-
-});
-var app = builder.Build();
-
-
-if (app.Environment.IsDevelopment())
-
-{
-
-    app.UseSwagger();
-
-    app.UseSwaggerUI();
-
+            app.Run();
+        }
+    }
 }
-
-
-app.UseHttpsRedirection();
-
-app.UseAuthentication();
-
-app.UseAuthorization();
-
-
-
-app.MapControllers();
-
-app.Run();
-
-public partial class Program { }
