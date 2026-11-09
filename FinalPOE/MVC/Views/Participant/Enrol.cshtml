@@ -1,0 +1,156 @@
+﻿@model RaceDayMVC.Models.EventViewModel
+
+@{
+
+    ViewData["Title"] = "Confirm Enrolment";
+
+    var availableCategories =
+
+        ViewBag.AvailableCategories as
+
+        List<RaceDayMVC.Models.EventCategoryOptionViewModel>;
+
+    var allCategories =
+
+        ViewBag.AllCategories as
+
+        List<RaceDayMVC.Models.CategoryViewModel>;
+
+}
+
+<div class="container mt-4">
+
+    <h2>Confirm Your Enrolment</h2>
+
+    <hr />
+
+    @if (ViewBag.Error != null)
+
+    {
+
+        <div class="alert alert-danger">
+
+            @ViewBag.Error
+
+        </div>
+
+    }
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <h4>Event Information</h4>
+
+            <p><strong>Event ID:</strong> @Model.Event_ID</p>
+
+            <p><strong>Location:</strong> @Model.Event_Location</p>
+
+            <p>
+
+                <strong>Event Date:</strong>
+
+                @Model.Event_Date.ToString("dd MMMM yyyy")
+
+            </p>
+
+            <hr />
+
+            <form asp-controller="Participant"
+                  asp-action="Enrol"
+                  asp-route-id="@Model.Event_ID"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="confirm" value="true" />
+
+                <div class="mb-3">
+
+                    <label for="categoryId" class="form-label">
+
+                        Select Your Event Category
+
+                    </label>
+
+                    <select name="categoryId"
+                            id="categoryId"
+                            class="form-select"
+                            required>
+
+                        <option value="">-- Choose a category --</option>
+
+                        @if (availableCategories != null && allCategories != null)
+
+                        {
+
+                            @foreach (var option in availableCategories)
+
+                            {
+
+                                var category = allCategories.FirstOrDefault(
+
+                                    c => c.Category_ID == option.Category_ID);
+
+                                if (category != null)
+
+                                {
+
+                                    <option value="@option.Category_ID">
+
+                                        @category.Category_ID -
+
+                                        @category.Event_Category_Name
+
+                                    </option>
+
+                                }
+
+                            }
+
+                        }
+
+                    </select>
+
+                </div>
+
+                @if (availableCategories == null || !availableCategories.Any())
+
+                {
+
+                    <div class="alert alert-warning">
+
+                        No categories have been assigned to this event yet.
+
+                        Please contact the organiser.
+
+                    </div>
+
+                }
+
+                <p>Are you sure you want to enrol for this event?</p>
+
+                <button type="submit"
+                        class="btn btn-success"
+                        disabled="@(availableCategories == null || !availableCategories.Any())">
+
+                    Confirm Enrolment
+
+                </button>
+
+                <a asp-controller="Participant"
+                   asp-action="Details"
+                   asp-route-id="@Model.Event_ID"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>

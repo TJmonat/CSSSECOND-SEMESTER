@@ -1,0 +1,128 @@
+﻿@model List<RaceDayMVC.Models.EnrolmentViewModel>
+
+@{
+
+    ViewData["Title"] = "Event Enrolments";
+
+}
+
+<div class="container mt-4">
+
+    <h2>Event Enrolments</h2>
+    <p>Event selected: @ViewBag.EventID</p>
+
+    <p>Total registrations retrieved: @ViewBag.TotalEnrolments</p>
+
+    <p>Registrations for this event: @ViewBag.MatchingEnrolments</p>
+
+    <hr />
+
+    <h5>Event ID: @ViewBag.EventID</h5>
+
+    <p>Location: @ViewBag.EventLocation</p>
+
+    <h4 class="mt-4">Enrolled Participants</h4>
+
+    <div class="table-responsive">
+
+        <table class="table table-bordered table-striped">
+
+            <thead class="table-dark">
+
+                <tr>
+
+                    <th>Registration ID</th>
+
+                    <th>Participant ID</th>
+
+                    <th>Participant Name</th>
+
+                    <th>Category</th>
+
+                    <th>Enrolment Date</th>
+
+                    <th>Status</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                @if (Model != null && Model.Any())
+
+                {
+
+                    @foreach (var item in Model)
+
+                    {
+
+                        <tr>
+
+                            <td>@item.Registration_ID</td>
+
+                            <td>@item.ParticipantID</td>
+
+                            <td>
+
+                                @item.Participant_Name
+
+                                @item.Participant_Surname
+
+                            </td>
+
+                            <td>@item.CategoryID</td>
+
+                            <td>
+
+                                @(item.Registration_Date?.ToString("dd MMM yyyy") ?? "Not available")
+
+                            </td>
+
+                            <td>
+
+                                <span class="badge bg-info">
+
+                                    @item.Registration_Status
+
+                                </span>
+
+                            </td>
+
+                        </tr>
+
+                    }
+
+                }
+
+                else
+
+                {
+
+                    <tr>
+
+                        <td colspan="6" class="text-center">
+
+                            No participants enrolled in this event yet.
+
+                        </td>
+
+                    </tr>
+
+                }
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <a asp-controller="Organiser"
+       asp-action="Index"
+       class="btn btn-secondary">
+
+        Back to Dashboard
+
+    </a>
+
+</div>

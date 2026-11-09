@@ -1,0 +1,303 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - RaceDay</title>
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/RaceDayMVC.styles.css"
+          asp-append-version="true" />
+
+</head>
+
+<body>
+
+    <header>
+
+        <nav class="navbar navbar-expand-lg navbar-dark raceday-navbar shadow-sm">
+
+            <div class="container">
+
+                <a class="navbar-brand raceday-brand"
+                   asp-controller="Home"
+                   asp-action="Index">
+
+                    🏁 RACEDAY
+
+                </a>
+
+                <button class="navbar-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#racedayNavigation"
+                        aria-controls="racedayNavigation"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation">
+
+                    <span class="navbar-toggler-icon"></span>
+
+                </button>
+
+                <div class="collapse navbar-collapse"
+                     id="racedayNavigation">
+
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+
+                        {
+
+                            @if (User.IsInRole("Participant"))
+
+                            {
+
+                                <li class="nav-item">
+
+                                    <a class="nav-link"
+                                       asp-controller="Participant"
+                                       asp-action="Index">
+
+                                        Home
+
+                                    </a>
+
+                                </li>
+
+                                <li class="nav-item">
+
+                                    <a class="nav-link"
+                                       asp-controller="Participant"
+                                       asp-action="MyEnrolments">
+
+                                        My Enrolments
+
+                                    </a>
+
+                                </li>
+
+                                <li class="nav-item">
+
+                                    <a class="nav-link"
+                                       asp-controller="Participant"
+                                       asp-action="MyResults">
+
+                                        My Results
+
+                                    </a>
+
+                                </li>
+
+                                <li class="nav-item">
+
+                                    <a class="nav-link"
+                                       asp-controller="Participant"
+                                       asp-action="Profile">
+
+                                        My Profile
+
+                                    </a>
+
+                                </li>
+
+                            }
+
+                            @if (User.IsInRole("Organiser"))
+
+                            {
+
+                                <li class="nav-item">
+
+                                    <a class="nav-link"
+                                       asp-controller="Organiser"
+                                       asp-action="Index">
+
+                                        Dashboard
+
+                                    </a>
+
+                                </li>
+
+                                <li class="nav-item">
+
+                                    <a class="nav-link"
+                                       asp-controller="Organiser"
+                                       asp-action="Categories">
+
+                                        Categories
+
+                                    </a>
+
+                                </li>
+
+                                <li class="nav-item">
+
+                                    <a class="nav-link"
+                                       asp-controller="Organiser"
+                                       asp-action="Results">
+
+                                        Race Results
+
+                                    </a>
+
+                                </li>
+
+                            }
+
+                        }
+
+                        else
+
+                        {
+
+                            <li class="nav-item">
+
+                                <a class="nav-link"
+                                   asp-controller="Home"
+                                   asp-action="Index">
+
+                                    Home
+
+                                </a>
+
+                            </li>
+
+                            <li class="nav-item">
+
+                                <a class="nav-link"
+                                   asp-controller="Account"
+                                   asp-action="Login">
+
+                                    Login
+
+                                </a>
+
+                            </li>
+
+                            <li class="nav-item">
+
+                                <a class="nav-link"
+                                   asp-controller="Account"
+                                   asp-action="Register">
+
+                                    Register
+
+                                </a>
+
+                            </li>
+
+                        }
+
+                    </ul>
+
+                    @if (User.Identity != null && User.Identity.IsAuthenticated)
+
+                    {
+
+                        <div class="d-flex align-items-center gap-3">
+
+                            <span class="text-white">
+
+                                Welcome, @User.Identity.Name
+
+                            </span>
+
+                            <form asp-controller="Account"
+                                  asp-action="Logout"
+                                  method="post">
+
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit"
+                                        class="btn btn-raceday">
+
+                                    Logout
+
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    }
+
+                </div>
+
+            </div>
+
+        </nav>
+
+    </header>
+
+    <main class="container raceday-main">
+        @if (TempData["Success"] != null)
+
+        {
+
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+
+                @TempData["Success"]
+
+                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                        aria-label="Close"></button>
+
+            </div>
+
+        }
+
+        @if (TempData["Error"] != null)
+
+        {
+
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+
+                @TempData["Error"]
+
+                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                        aria-label="Close"></button>
+
+            </div>
+
+        }
+
+        @RenderBody()
+
+    </main>
+
+    <footer class="raceday-footer mt-5">
+
+        <div class="container text-center py-4">
+
+            <h5>🏁 RACEDAY</h5>
+
+            <p>READY. SET. RACE.</p>
+
+            <small>&copy; 2026 RaceDay. All Rights Reserved.</small>
+
+        </div>
+
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+
+</html>

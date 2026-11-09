@@ -1,0 +1,218 @@
+﻿@model List<RaceDayMVC.Models.EventViewModel>
+
+@{
+
+    ViewData["Title"] = "Upcoming Events";
+
+}
+
+<div class="container mt-4">
+
+    <h2>Welcome to RaceDay!</h2>
+
+    <p>Discover upcoming races and enrol for an event.</p>
+
+   
+
+    <div class="mb-4">
+
+        <a asp-controller="Participant"
+           asp-action="MyEnrolments"
+           class="btn btn-success me-2">
+
+            My Enrolments
+
+        </a>
+
+        <a asp-controller="Participant"
+           asp-action="MyResults"
+           class="btn btn-primary">
+
+            My Results
+
+        </a>
+
+        <a asp-controller="Participant"
+           asp-action="Profile"
+           class="btn btn-info text-white me-2">
+
+            My Profile
+
+        </a>
+
+    </div>
+
+    @if (ViewBag.Error != null)
+
+    {
+
+        <div class="alert alert-danger">
+
+            @ViewBag.Error
+
+        </div>
+
+    }
+
+    <hr />
+
+    <h3>Upcoming Events</h3>
+
+    
+
+    <form method="get"
+          asp-controller="Participant"
+          asp-action="Index"
+          class="mb-4">
+
+        <div class="row">
+
+            <div class="col-md-4 mb-2">
+
+                <label>Location</label>
+
+                <input type="text"
+                       name="location"
+                       value="@ViewBag.Location"
+                       class="form-control"
+                       placeholder="Enter location" />
+
+            </div>
+
+            <div class="col-md-3 mb-2">
+
+                <label>Event Date</label>
+
+                <input type="date"
+                       name="eventDate"
+                       value="@ViewBag.EventDate"
+                       class="form-control" />
+
+            </div>
+
+            <div class="col-md-3 mb-2">
+
+                <label>Category</label>
+
+                <input type="text"
+                       name="category"
+                       value="@ViewBag.Category"
+                       class="form-control"
+                       placeholder="Enter category ID" />
+
+            </div>
+
+            <div class="col-md-2 mb-2 d-flex align-items-end">
+
+                <button type="submit"
+                        class="btn btn-primary w-100">
+
+                    Filter
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <a asp-controller="Participant"
+           asp-action="Index"
+           class="btn btn-secondary mt-2">
+
+            Clear Filters
+
+        </a>
+
+    </form>
+
+    <hr />
+
+   
+    @if (Model != null && Model.Any())
+
+    {
+
+        <div class="row">
+
+            @foreach (var item in Model)
+
+            {
+
+                <div class="col-md-4 mb-4">
+
+                    <div class="card h-100 shadow-sm">
+
+                       
+
+                        <img src="https://localhost:7211/api/Images/event-banner/@Uri.EscapeDataString(item.Event_ID)"
+                             class="card-img-top"
+                             alt="Event banner"
+                             style="height:200px; object-fit:cover;"
+                             onerror="this.style.display='none';" />
+
+                        <div class="card-body">
+
+                            <h5 class="card-title">
+
+                                Event: @item.Event_ID
+
+                            </h5>
+
+                            <p>
+
+                                <strong>Location:</strong>
+
+                                @item.Event_Location
+
+                            </p>
+
+                            <p>
+
+                                <strong>Date:</strong>
+
+                                @item.Event_Date.ToString("dd MMM yyyy")
+
+                            </p>
+
+                            <p>
+
+                                <strong>Category:</strong>
+
+                                @item.CategoryID
+
+                            </p>
+
+                            <a asp-controller="Participant"
+                               asp-action="Details"
+                               asp-route-id="@item.Event_ID"
+                               class="btn btn-primary">
+
+                                View Event
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            }
+
+        </div>
+
+    }
+
+    else
+
+    {
+
+        <div class="alert alert-info">
+
+            There are currently no upcoming events available.
+
+        </div>
+
+    }
+
+</div>

@@ -1,0 +1,197 @@
+﻿@model RaceDayMVC.Models.ProfileViewModel
+
+@{
+
+    ViewData["Title"] = "My Profile";
+
+}
+
+<div class="container mt-4">
+
+    <h2>My Participant Profile</h2>
+
+    <p class="text-muted">
+
+        View and update your personal information.
+
+    </p>
+
+    <hr />
+
+    @if (ViewBag.Error != null)
+
+    {
+
+        <div class="alert alert-danger">
+
+            @ViewBag.Error
+
+        </div>
+
+    }
+
+    @if (TempData["Success"] != null)
+
+    {
+
+        <div class="alert alert-success">
+
+            @TempData["Success"]
+
+        </div>
+
+    }
+
+    @if (TempData["Error"] != null)
+
+    {
+
+        <div class="alert alert-danger">
+
+            @TempData["Error"]
+
+        </div>
+
+    }
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body text-center">
+
+            <h4 class="mb-3">My Profile Picture</h4>
+
+            <img src="@Url.Action("ProfilePictureImage", "Participant")"
+                 alt="Participant Profile Picture"
+                 class="rounded-circle shadow-sm mb-3"
+                 style="width:160px; height:160px; object-fit:cover;"
+                 onerror="this.src='https://placehold.co/160x160?text=No+Photo';" />
+
+            <form asp-controller="Participant"
+                  asp-action="UploadProfilePicture"
+                  method="post"
+                  enctype="multipart/form-data">
+
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+
+                    <input type="file"
+                           name="profilePicture"
+                           class="form-control"
+                           accept=".jpg,.jpeg,.png,.webp"
+                           required />
+
+                    <small class="text-muted">
+
+                        JPG, JPEG, PNG or WEBP. Maximum size: 5 MB.
+
+                    </small>
+
+                </div>
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    Upload Profile Picture
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <h4>Personal Information</h4>
+
+            <hr />
+
+            <form asp-controller="Participant"
+                  asp-action="Profile"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Participant ID
+
+                    </label>
+
+                    <input asp-for="Participant_ID"
+                           class="form-control"
+                           readonly />
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        First Name
+
+                    </label>
+
+                    <input asp-for="Participant_Name"
+                           class="form-control"
+                           required />
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Surname
+
+                    </label>
+
+                    <input asp-for="Participant_Surname"
+                           class="form-control"
+                           required />
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Email Address
+
+                    </label>
+
+                    <input asp-for="Participant_Email"
+                           type="email"
+                           class="form-control"
+                           required />
+
+                </div>
+
+                <button type="submit"
+                        class="btn btn-success">
+
+                    Save Changes
+
+                </button>
+
+                <a asp-controller="Participant"
+                   asp-action="Index"
+                   class="btn btn-secondary">
+
+                    Back to Homepage
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>

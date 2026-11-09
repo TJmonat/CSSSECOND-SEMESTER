@@ -1,0 +1,162 @@
+﻿@model List<RaceDayMVC.Models.RaceResultViewModel>
+
+@{
+
+    ViewData["Title"] = "Race Results";
+
+}
+
+<div class="container mt-4">
+
+    <h2>Manage Race Results</h2>
+
+    @if (TempData["Success"] != null)
+
+    {
+
+        <div class="alert alert-success">
+
+            @TempData["Success"]
+
+        </div>
+
+    }
+
+    @if (TempData["Error"] != null)
+
+    {
+
+        <div class="alert alert-danger">
+
+            @TempData["Error"]
+
+        </div>
+
+    }
+
+    @if (ViewBag.Error != null)
+
+    {
+
+        <div class="alert alert-danger">
+
+            @ViewBag.Error
+
+        </div>
+
+    }
+
+    <a asp-controller="Organiser"
+       asp-action="CreateResult"
+       class="btn btn-primary mb-3">
+
+        + Add Race Result
+
+    </a>
+
+    <table class="table table-bordered table-striped">
+
+        <thead class="table-dark">
+
+            <tr>
+
+                <th>Result ID</th>
+
+                <th>Registration ID</th>
+
+                <th>Finishing Position</th>
+
+                <th>Finish Time</th>
+
+                <th>Actions</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            @if (Model != null && Model.Any())
+
+            {
+
+                foreach (var result in Model)
+
+                {
+
+                    <tr>
+
+                        <td>@result.RaceResult_ID</td>
+
+                        <td>@result.Registration_ID</td>
+
+                        <td>@result.Finishing_Position</td>
+
+                        <td>@result.Finish_Time</td>
+
+                        <td>
+
+                            <a asp-controller="Organiser"
+                               asp-action="EditResult"
+                               asp-route-id="@result.RaceResult_ID"
+                               class="btn btn-warning btn-sm">
+
+                                Edit
+
+                            </a>
+
+                            <form asp-controller="Organiser"
+                                  asp-action="DeleteResult"
+                                  asp-route-id="@result.RaceResult_ID"
+                                  method="post"
+                                  style="display:inline">
+
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit"
+                                        class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Delete this race result?');">
+
+                                    Delete
+
+                                </button>
+
+                            </form>
+
+                        </td>
+
+                    </tr>
+
+                }
+
+            }
+
+            else
+
+            {
+
+                <tr>
+
+                    <td colspan="5" class="text-center">
+
+                        No race results have been recorded yet.
+
+                    </td>
+
+                </tr>
+
+            }
+
+        </tbody>
+
+    </table>
+
+    <a asp-controller="Organiser"
+       asp-action="Index"
+       class="btn btn-secondary">
+
+        Back to Dashboard
+
+    </a>
+
+</div>

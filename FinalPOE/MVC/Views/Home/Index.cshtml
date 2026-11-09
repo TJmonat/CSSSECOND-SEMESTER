@@ -1,0 +1,36 @@
+﻿@{
+    ViewData["Title"] = "RaceDay Home";
+}
+<div class="text-center mt-5">
+    <h1>Welcome to RaceDay</h1>
+    <p>Your platform for managing and participating in racing events.</p>
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        <h3>Welcome, @User.Identity.Name!</h3>
+       <p>
+            Your role:
+            @User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value
+        </p>
+        @if (User.IsInRole("Participant"))
+        {
+            <a asp-controller="Participant" asp-action="Index"
+               class="btn btn-primary">Participant Dashboard</a>
+        }
+        @if (User.IsInRole("Organiser"))
+        {
+            <a asp-controller="Organiser" asp-action="Index"
+               class="btn btn-success">Organiser Dashboard</a>
+        }
+        <br /><br />
+        <form asp-controller="Account" asp-action="Logout" method="post">
+            <button type="submit" class="btn btn-danger">Logout</button>
+        </form>
+    }
+    else
+    {
+        <a asp-controller="Account" asp-action="Login"
+           class="btn btn-primary">Login</a>
+        <a asp-controller="Account" asp-action="Register"
+           class="btn btn-success">Register</a>
+    }
+</div>

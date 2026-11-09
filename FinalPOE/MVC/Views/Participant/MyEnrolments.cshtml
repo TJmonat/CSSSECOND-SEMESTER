@@ -1,0 +1,157 @@
+﻿@model List<RaceDayMVC.Models.MyEnrolmentViewModel>
+
+@{
+
+    ViewData["Title"] = "My Enrolments";
+
+}
+
+<div class="container mt-4">
+
+    <h2>🏁 My Enrolments</h2>
+
+    <p class="text-muted">
+
+        View all the events you have enrolled for and their registration status.
+
+    </p>
+
+    <hr />
+
+    @if (ViewBag.Error != null)
+
+    {
+
+        <div class="alert alert-danger">
+
+            We couldn't retrieve your enrolments. Please try again later.
+
+        </div>
+
+    }
+
+    @if (Model == null || !Model.Any())
+
+    {
+
+        <div class="alert alert-info">
+
+            You have not enrolled for any events yet.
+
+        </div>
+
+    }
+
+    else
+
+    {
+
+        <div class="table-responsive">
+
+            <table class="table table-bordered table-striped">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Event Name</th>
+
+                        <th>Event ID</th>
+
+                        <th>Location</th>
+
+                        <th>Event Date</th>
+
+                        <th>Category</th>
+
+                        <th>Registration Date</th>
+
+                        <th>Status</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var enrolment in Model)
+
+                    {
+
+                        var status = enrolment.Registration_Status?.Trim();
+
+                        var statusClass =
+
+                            string.Equals(status, "Confirmed", StringComparison.OrdinalIgnoreCase)
+
+                                ? "status-confirmed"
+
+                                : string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase)
+
+                                    ? "status-pending"
+
+                                    : string.Equals(status, "Cancelled", StringComparison.OrdinalIgnoreCase)
+
+                                        ? "status-cancelled"
+
+                                        : "bg-secondary text-white";
+
+                        <tr>
+
+                            <td>@enrolment.Event_Name</td>
+
+                            <td>@enrolment.Event_ID</td>
+
+                            <td>@enrolment.Event_Location</td>
+
+                            <td>
+
+                                @enrolment.Event_Date.ToString("dd MMMM yyyy")
+
+                            </td>
+
+                            <td>
+
+                                @enrolment.Category_Name
+
+                                (@enrolment.Category_ID)
+
+                            </td>
+
+                            <td>
+
+                                @(enrolment.Registration_Date?.ToString("dd MMMM yyyy") ?? "N/A")
+
+                            </td>
+
+                            <td>
+
+                                <span class="status-confirmed @statusClass">
+
+                                    @(string.IsNullOrWhiteSpace(status) ? "Unknown" : status)
+
+                                </span>
+
+                            </td>
+
+                        </tr>
+
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    }
+
+    <a asp-controller="Participant"
+       asp-action="Index"
+       class="btn btn-secondary mt-3">
+
+        Back to Events
+
+    </a>
+
+</div>

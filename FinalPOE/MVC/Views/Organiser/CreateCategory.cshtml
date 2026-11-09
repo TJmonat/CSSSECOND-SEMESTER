@@ -1,0 +1,87 @@
+﻿@model RaceDayMVC.Models.CategoryViewModel
+
+@{
+
+    ViewData["Title"] = "Create Category";
+
+}
+
+<div class="container mt-4">
+
+    <h2>Create Event Category</h2>
+
+    <p>Enter the details of the new event category below.</p>
+
+    <form asp-controller="Organiser"
+          asp-action="CreateCategory"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="All" class="text-danger"></div>
+
+        <div class="mb-3">
+
+            <label asp-for="Category_ID" class="form-label">
+
+                Category ID
+
+            </label>
+
+            <input asp-for="Category_ID" class="form-control"
+                   placeholder="Example: CAT004" />
+
+            <span asp-validation-for="Category_ID"
+                  class="text-danger"></span>
+
+        </div>
+
+        <div class="mb-3">
+
+            <label asp-for="Event_Category_Name" class="form-label">
+
+                Category Name
+
+            </label>
+
+            <input asp-for="Event_Category_Name" class="form-control"
+                   placeholder="Example: Marathon" />
+
+        </div>
+
+        <div class="mb-3">
+
+            <label asp-for="Event_Category_Type" class="form-label">
+
+                Category Type
+
+            </label>
+
+            <input asp-for="Event_Category_Type" class="form-control"
+                   placeholder="Example: Running" />
+
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+
+            Create Category
+
+        </button>
+
+        <a asp-controller="Organiser"
+           asp-action="Categories"
+           class="btn btn-secondary">
+
+            Cancel
+
+        </a>
+
+    </form>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+}

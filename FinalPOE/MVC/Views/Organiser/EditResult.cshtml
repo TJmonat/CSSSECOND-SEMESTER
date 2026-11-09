@@ -1,0 +1,66 @@
+﻿@model RaceDayMVC.Models.RaceResultViewModel
+
+@{
+
+    ViewData["Title"] = "Edit Race Result";
+
+}
+
+<div class="container mt-4">
+
+    <h2>Edit Race Result</h2>
+
+    <form asp-controller="Organiser" asp-action="EditResult" method="post">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" asp-for="RaceResult_ID" />
+
+        <div asp-validation-summary="All" class="text-danger"></div>
+
+        <div class="mb-3">
+
+            <label asp-for="RaceResult_ID" class="form-label">Result ID</label>
+
+            <input asp-for="RaceResult_ID" class="form-control" readonly />
+
+        </div>
+
+        <div class="mb-3">
+
+            <label asp-for="Registration_ID" class="form-label">Registration ID</label>
+
+            <input asp-for="Registration_ID" class="form-control" readonly />
+
+        </div>
+
+        <div class="mb-3">
+
+            <label asp-for="Finishing_Position" class="form-label">Finishing Position</label>
+
+            <input asp-for="Finishing_Position" type="number"
+                   min="1" class="form-control" />
+
+            <span asp-validation-for="Finishing_Position" class="text-danger"></span>
+
+        </div>
+
+        <div class="mb-3">
+
+            <label asp-for="Finish_Time" class="form-label">Finish Time</label>
+
+            <input asp-for="Finish_Time" type="time" step="1"
+                   class="form-control" />
+
+            <span asp-validation-for="Finish_Time" class="text-danger"></span>
+
+        </div>
+
+        <button type="submit" class="btn btn-success">Update Result</button>
+
+        <a asp-controller="Organiser" asp-action="Results"
+           class="btn btn-secondary">Cancel</a>
+
+    </form>
+
+</div>

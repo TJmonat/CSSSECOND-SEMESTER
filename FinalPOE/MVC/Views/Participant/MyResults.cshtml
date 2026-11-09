@@ -1,0 +1,141 @@
+﻿@model List<RaceDayMVC.Models.MyResultViewModel>
+
+@{
+
+    ViewData["Title"] = "My Results";
+
+}
+
+<div class="container mt-4">
+
+    <h2>My Race Results</h2>
+
+    <p class="text-muted">
+
+        View your race history, finishing times and positions.
+
+    </p>
+
+    <hr />
+
+    @if (ViewBag.Error != null)
+
+    {
+
+        <div class="alert alert-danger">
+
+            @ViewBag.Error
+
+        </div>
+
+    }
+
+    @if (Model == null || !Model.Any())
+
+    {
+
+        <div class="alert alert-info">
+
+            No race results are available yet.
+
+            Your results will appear here once the organiser has entered them.
+
+        </div>
+
+    }
+
+    else
+
+    {
+
+        <div class="table-responsive">
+
+            <table class="table table-bordered table-striped">
+
+                <thead class="table-dark">
+
+                    <tr>
+
+                        <th>Event Name</th>
+
+                        <th>Event Date</th>
+
+                        <th>Location</th>
+
+                        <th>Category</th>
+
+                        <th>Finish Time</th>
+
+                        <th>Finishing Position</th>
+
+                        <th>Total Participants</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var result in Model)
+
+                    {
+
+                        <tr>
+
+                            <td>@result.Event_Name</td>
+
+                            <td>
+
+                                @result.Event_Date.ToString("dd MMMM yyyy")
+
+                            </td>
+
+                            <td>@result.Event_Location</td>
+
+                            <td>
+
+                                @result.Category_Name
+
+                                (@result.Category_ID)
+
+                            </td>
+
+                            <td>
+
+                                @result.Finish_Time.ToString(@"hh\:mm\:ss")
+
+                            </td>
+
+                            <td>
+
+                                @result.Finishing_Position
+
+                            </td>
+
+                            <td>
+
+                                @result.TotalParticipants
+
+                            </td>
+
+                        </tr>
+
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    }
+
+    <a asp-controller="Participant"
+       asp-action="Index"
+       class="btn btn-secondary mt-3">
+
+        Back to Homepage
+
+    </a>
+
+</div>

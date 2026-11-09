@@ -1,0 +1,187 @@
+﻿@model RaceDayMVC.Models.EventViewModel
+
+@{
+
+    ViewData["Title"] = "Event Details";
+
+    var categories = ViewBag.Categories as
+
+        List<RaceDayMVC.Models.CategoryViewModel>;
+
+}
+
+<div class="container mt-4">
+
+    <h2>Event Details</h2>
+
+    <hr />
+    @if (TempData["Success"] != null)
+
+    {
+
+        <div class="alert alert-success">
+
+            @TempData["Success"]
+
+        </div>
+
+    }
+
+    @if (ViewBag.Error != null)
+
+    {
+
+        <div class="alert alert-danger">
+
+            @ViewBag.Error
+
+        </div>
+
+    }
+
+    @if (Model != null)
+
+    {
+
+        <div class="card shadow-sm mb-4">
+
+            <div class="card-body">
+
+                <h4 class="card-title">
+
+                    Event: @Model.Event_ID
+
+                </h4>
+
+                <p>
+
+                    <strong>Location:</strong>
+
+                    @Model.Event_Location
+
+                </p>
+
+                <p>
+
+                    <strong>Event Date:</strong>
+
+                    @Model.Event_Date.ToString("dd MMMM yyyy")
+
+                </p>
+
+                <p>
+
+                    <strong>Category ID:</strong>
+
+                    @Model.CategoryID
+
+                </p>
+
+                <p>
+
+                    <strong>Organiser ID:</strong>
+
+                    @Model.EventOrganizerID
+
+                </p>
+
+                <p>
+
+                    <strong>Venue ID:</strong>
+
+                    @Model.VenueID
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <h3>Available Categories</h3>
+
+        @if (categories != null && categories.Any())
+
+        {
+
+            <table class="table table-bordered table-striped">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Category ID</th>
+
+                        <th>Category Name</th>
+
+                        <th>Category Type</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var category in categories)
+
+                    {
+
+                        <tr>
+
+                            <td>@category.Category_ID</td>
+
+                            <td>@category.Event_Category_Name</td>
+
+                            <td>@category.Event_Category_Type</td>
+
+                        </tr>
+
+                    }
+
+                </tbody>
+
+            </table>
+
+        }
+
+        else
+
+        {
+
+            <div class="alert alert-info">
+
+                No categories are currently available.
+
+            </div>
+
+        }
+
+    }
+    @if (Model.Event_Date.Date >= DateTime.Today)
+
+    {
+        
+        <form asp-controller="Participant"
+              asp-action="Enrol"
+              asp-route-id="@Model.Event_ID"
+              method="get"
+              class="d-inline">
+
+            <button type="submit" class="btn btn-success">
+
+                Enrol Now
+
+            </button>
+
+        </form>
+
+    }
+
+    <a asp-controller="Participant"
+       asp-action="Index"
+       class="btn btn-secondary">
+
+        Back to Events
+
+    </a>
+
+</div>
