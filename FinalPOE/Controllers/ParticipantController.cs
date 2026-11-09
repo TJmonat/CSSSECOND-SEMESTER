@@ -2,271 +2,684 @@
 
 using Microsoft.AspNetCore.Mvc;
 
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 
-using RaceDayAP1.Data;
+using RaceDayMVC.Models;
 
-using RaceDayAP1.Models;
+using System.Net.Http.Json;
 
-namespace RaceDayApi.Controllers
+namespace RaceDayMVC.Controllers
 
 {
 
-    [ApiController]
+    [Authorize(Roles = "Participant")]
 
-    [Route("api/participants")]
-
-    [Authorize(Roles = "Participant,Organiser")]
-
-    public class ParticipantsController : ControllerBase
+    public class ParticipantController : Controller
 
     {
 
-        private readonly RaceDayContext _db;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public ParticipantsController(RaceDayContext db)
+        public ParticipantController(
+
+            IHttpClientFactory httpClientFactory)
 
         {
 
-            _db = db;
+            _httpClientFactory = httpClientFactory;
 
         }
 
-        // PARTICIPANT: VIEW OWN PROFILE
-
-        [HttpGet("mine")]
-
-        [Authorize(Roles = "Participant")]
-
-        public async Task<IActionResult> GetMyProfile()
+        private HttpClient CreateApiClient()
 
         {
 
-            var participantId = User.FindFirst("Participant_ID")?.Value;
+            var client =
 
-            if (string.IsNullOrWhiteSpace(participantId))
+                _httpClientFactory.CreateClient("RaceDayAPI");
 
-                return Forbid();
+            var apiCookie =
 
-            var participant = await _db.Participants
+                HttpContext.Session.GetString("ApiCookie");
 
-                .AsNoTracking()
-
-                .FirstOrDefaultAsync(p =>
-
-                    p.Participant_ID == participantId);
-
-            if (participant == null)
-
-                return NotFound("Participant profile not found.");
-
-            return Ok(participant);
-
-        }
-
-        // PARTICIPANT: UPDATE OWN PROFILE
-
-        [HttpPut("mine")]
-
-        [Authorize(Roles = "Participant")]
-
-        public async Task<IActionResult> UpdateMyProfile(
-
-            Participant updated)
-
-        {
-
-            var participantId = User.FindFirst("Participant_ID")?.Value;
-
-            if (string.IsNullOrWhiteSpace(participantId))
-
-                return Forbid();
-
-            var participant = await _db.Participants
-
-                .FirstOrDefaultAsync(p =>
-
-                    p.Participant_ID == participantId);
-
-            if (participant == null)
-
-                return NotFound("Participant profile not found.");
-
-            if (!string.IsNullOrWhiteSpace(updated.Participant_Email) &&
-
-                await _db.Participants.AnyAsync(p =>
-
-                    p.Participant_Email == updated.Participant_Email &&
-
-                    p.Participant_ID != participantId))
+            if (!string.IsNullOrEmpty(apiCookie))
 
             {
 
-                return Conflict("Email already belongs to another participant.");
+                client.DefaultRequestHeaders.TryAddWithoutValidation(
+
+                    "Cookie", apiCookie);
 
             }
 
-            participant.Participant_Name = updated.Participant_Name;
-
-            participant.Participant_Surname = updated.Participant_Surname;
-
-            participant.Participant_Email = updated.Participant_Email;
-
-            await _db.SaveChangesAsync();
-
-            return Ok(participant);
+            return client;
 
         }
 
-        // VIEW ALL PARTICIPANTS
+      
+
+        public async Task<IActionResult> Index(
+
+            string? location,
+
+            DateTime? eventDate,
+
+            string? category)
+
+        {
+
+            var client = CreateApiClient();
+
+            try
+
+            {
+
+                var events =
+
+                    await client.GetFromJsonAsync<List<EventViewModel>>(
+
+                        "api/events");
+
+                events ??= new List<EventViewModel>();
+
+                var upcomingEvents = events
+
+                    .Where(e => e.Event_Date.Date >= DateTime.Today);
+
+                if (!string.IsNullOrWhiteSpace(location))
+
+                {
+
+                    upcomingEvents = upcomingEvents.Where(e =>
+
+                        e.Event_Location != null &&
+
+                        e.Event_Location.Contains(
+
+                            location,
+
+                            StringComparison.OrdinalIgnoreCase));
+
+                }
+
+                if (eventDate.HasValue)
+
+                {
+
+                    upcomingEvents = upcomingEvents.Where(e =>
+
+                        e.Event_Date.Date == eventDate.Value.Date);
+
+                }
+
+                if (!string.IsNullOrWhiteSpace(category))
+
+                {
+
+                    upcomingEvents = upcomingEvents.Where(e =>
+
+                        e.CategoryID != null &&
+
+                        e.CategoryID.Equals(
+
+                            category,
+
+                            StringComparison.OrdinalIgnoreCase));
+
+                }
+
+                ViewBag.Location = location;
+
+                ViewBag.EventDate =
+
+                    eventDate?.ToString("yyyy-MM-dd");
+
+                ViewBag.Category = category;
+
+                return View(
+
+                    upcomingEvents.OrderBy(e => e.Event_Date).ToList());
+
+            }
+
+            catch (HttpRequestException)
+
+            {
+
+                ViewBag.Error =
+
+                    "Could not retrieve events from the API.";
+
+                return View(new List<EventViewModel>());
+
+            }
+
+        }
+
+       
+
+        public async Task<IActionResult> Details(string id)
+
+        {
+
+            var client = CreateApiClient();
+
+            try
+
+            {
+
+                var selectedEvent =
+
+                    await client.GetFromJsonAsync<EventViewModel>(
+
+                        $"api/events/{Uri.EscapeDataString(id)}");
+
+                if (selectedEvent == null)
+
+                    return NotFound("Event not found.");
+
+                var categories =
+
+                    await client.GetFromJsonAsync<List<CategoryViewModel>>(
+
+                        "api/categories");
+
+                categories ??= new List<CategoryViewModel>();
+
+                ViewBag.Categories = categories;
+
+                return View(selectedEvent);
+
+            }
+
+            catch (HttpRequestException)
+
+            {
+
+                return View("Error");
+
+            }
+
+        }
+
+       
+
+        public async Task<IActionResult> MyEnrolments()
+
+        {
+
+            var client = CreateApiClient();
+
+            try
+
+            {
+
+                var enrolments =
+
+                    await client.GetFromJsonAsync<List<MyEnrolmentViewModel>>(
+
+                        "api/enrolments/mine");
+
+                return View(
+
+                    enrolments ?? new List<MyEnrolmentViewModel>());
+
+            }
+
+            catch (HttpRequestException)
+
+            {
+
+                ViewBag.Error =
+
+                    "Could not retrieve your enrolments.";
+
+                return View(new List<MyEnrolmentViewModel>());
+
+            }
+
+        }
+
+       
+
+        public async Task<IActionResult> MyResults()
+
+        {
+
+            var client = CreateApiClient();
+
+            try
+
+            {
+
+                var results =
+
+                    await client.GetFromJsonAsync<List<MyResultViewModel>>(
+
+                        "api/raceresults/mine");
+
+                return View(results ?? new List<MyResultViewModel>());
+
+            }
+
+            catch (HttpRequestException)
+
+            {
+
+                ViewBag.Error =
+
+                    "Could not retrieve your race results.";
+
+                return View(new List<MyResultViewModel>());
+
+            }
+
+        }
+
+        
 
         [HttpGet]
 
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> Enrol(string id)
 
         {
 
-            return Ok(await _db.Participants
+            var client = CreateApiClient();
 
-                .AsNoTracking()
+            try
 
-                .ToListAsync());
+            {
+
+                var selectedEvent =
+
+                    await client.GetFromJsonAsync<EventViewModel>(
+
+                        $"api/events/{Uri.EscapeDataString(id)}");
+
+                if (selectedEvent == null)
+
+                    return NotFound("Event not found.");
+
+                if (selectedEvent.Event_Date.Date < DateTime.Today)
+
+                {
+
+                    return BadRequest(
+
+                        "You cannot enrol for a completed event.");
+
+                }
+
+                var categories =
+
+                    await client.GetFromJsonAsync<List<EventCategoryOptionViewModel>>(
+
+                        $"api/eventcategoryoptions/{Uri.EscapeDataString(id)}");
+
+                categories ??= new List<EventCategoryOptionViewModel>();
+
+                ViewBag.AvailableCategories = categories;
+
+                var allCategories =
+
+                    await client.GetFromJsonAsync<List<CategoryViewModel>>(
+
+                        "api/categories");
+
+                allCategories ??= new List<CategoryViewModel>();
+
+                ViewBag.AllCategories = allCategories;
+
+                return View(selectedEvent);
+
+            }
+
+            catch (HttpRequestException)
+
+            {
+
+                return View("Error");
+
+            }
 
         }
 
-        // VIEW PARTICIPANT BY ID
-
-        [HttpGet("{id}")]
-
-        public async Task<IActionResult> GetById(string id)
-
-        {
-
-            var participant = await _db.Participants.FindAsync(id);
-
-            if (participant == null)
-
-                return NotFound();
-
-            return Ok(participant);
-
-        }
-
-        // CREATE PARTICIPANT
+        
 
         [HttpPost]
 
-        public async Task<IActionResult> Create(Participant participant)
+        [ValidateAntiForgeryToken]
+
+        public async Task<IActionResult> Enrol(
+
+            string id,
+
+            bool confirm,
+
+            string categoryId)
 
         {
 
-            if (string.IsNullOrWhiteSpace(participant.Participant_ID))
+            if (!confirm)
 
-                return BadRequest("Participant ID is required.");
+                return RedirectToAction("Details", new { id });
 
-            if (participant.Participant_ID.Length > 13)
+            if (string.IsNullOrWhiteSpace(categoryId))
 
-                return BadRequest("Participant ID cannot exceed 13 characters.");
+            {
 
-            if (await _db.Participants.AnyAsync(
+                ViewBag.Error = "Please select a category.";
 
-                p => p.Participant_ID == participant.Participant_ID))
+                return await Enrol(id);
 
-                return Conflict("Participant ID already exists.");
+            }
 
-            if (!string.IsNullOrWhiteSpace(participant.Participant_Email) &&
+            var client = CreateApiClient();
 
-                await _db.Participants.AnyAsync(
+            var enrolment = new
 
-                    p => p.Participant_Email == participant.Participant_Email))
+            {
 
-                return Conflict("Email already exists.");
+                Registration_ID = Guid.NewGuid().ToString("N")[..13],
 
-            _db.Participants.Add(participant);
+                EventID = id,
 
-            await _db.SaveChangesAsync();
+                Category_ID = categoryId
 
-            return CreatedAtAction(
+            };
 
-                nameof(GetById),
+            try
 
-                new { id = participant.Participant_ID },
+            {
 
-                participant);
+                var response = await client.PostAsJsonAsync(
+
+                    "api/enrolments", enrolment);
+
+                if (response.IsSuccessStatusCode)
+
+                {
+
+                    TempData["Success"] =
+
+                        "You have successfully enrolled for this event!";
+
+                    return RedirectToAction("Details", new { id });
+
+                }
+
+                ViewBag.Error =
+
+                    await response.Content.ReadAsStringAsync();
+
+                return await Enrol(id);
+
+            }
+
+            catch (HttpRequestException)
+
+            {
+
+                ViewBag.Error =
+
+                    "Could not connect to the RaceDay API.";
+
+                return await Enrol(id);
+
+            }
 
         }
 
-        // UPDATE PARTICIPANT BY ID
+        
 
-        [HttpPut("{id}")]
+        [HttpGet]
 
-        public async Task<IActionResult> Update(
-
-            string id, Participant updated)
+        public async Task<IActionResult> Profile()
 
         {
 
-            var participant = await _db.Participants.FindAsync(id);
+            var client = CreateApiClient();
 
-            if (participant == null)
+            try
 
-                return NotFound();
+            {
 
-            if (!string.IsNullOrWhiteSpace(updated.Participant_Email) &&
+                var profile =
 
-                await _db.Participants.AnyAsync(
+                    await client.GetFromJsonAsync<ProfileViewModel>(
 
-                    p => p.Participant_Email == updated.Participant_Email
+                        "api/participants/mine");
 
-                         && p.Participant_ID != id))
+                if (profile == null)
 
-                return Conflict("Email already belongs to another participant.");
+                    return NotFound("Profile not found.");
 
-            participant.Participant_Name = updated.Participant_Name;
+                profile.ProfilePictureUrl =
 
-            participant.Participant_Surname = updated.Participant_Surname;
+                    Url.Action(
 
-            participant.Participant_Email = updated.Participant_Email;
+                        "ProfilePictureImage",
 
-            await _db.SaveChangesAsync();
+                        "Participant");
 
-            return Ok(participant);
+                return View(profile);
+
+            }
+
+            catch (HttpRequestException)
+
+            {
+
+                ViewBag.Error =
+
+                    "Could not retrieve your profile.";
+
+                return View(new ProfileViewModel());
+
+            }
 
         }
 
-        // DELETE PARTICIPANT
+       
 
-        [HttpDelete("{id}")]
+        [HttpPost]
 
-        public async Task<IActionResult> Delete(string id)
+        [ValidateAntiForgeryToken]
+
+        public async Task<IActionResult> Profile(
+
+            ProfileViewModel profile)
 
         {
 
-            var participant = await _db.Participants.FindAsync(id);
+            var client = CreateApiClient();
 
-            if (participant == null)
+            try
+
+            {
+
+
+                profile.ProfilePicture = null;
+
+                profile.ProfilePictureUrl = null;
+
+                var response = await client.PutAsJsonAsync(
+
+                    "api/participants/mine", profile);
+
+                if (response.IsSuccessStatusCode)
+
+                {
+
+                    TempData["Success"] =
+
+                        "Your profile was updated successfully!";
+
+                    return RedirectToAction("Profile");
+
+                }
+
+                ViewBag.Error =
+
+                    await response.Content.ReadAsStringAsync();
+
+                return View(profile);
+
+            }
+
+            catch (HttpRequestException)
+
+            {
+
+                ViewBag.Error =
+
+                    "Could not connect to the RaceDay API.";
+
+                return View(profile);
+
+            }
+
+        }
+
+        
+        [HttpPost]
+
+        [ValidateAntiForgeryToken]
+
+        public async Task<IActionResult> UploadProfilePicture(
+
+            IFormFile profilePicture)
+
+        {
+
+            if (profilePicture == null ||
+
+                profilePicture.Length == 0)
+
+            {
+
+                TempData["Error"] =
+
+                    "Please select a picture.";
+
+                return RedirectToAction("Profile");
+
+            }
+
+            var client = CreateApiClient();
+
+            try
+
+            {
+
+                using var content =
+
+                    new MultipartFormDataContent();
+
+                using var stream =
+
+                    profilePicture.OpenReadStream();
+
+                using var fileContent =
+
+                    new StreamContent(stream);
+
+                content.Add(
+
+                    fileContent,
+
+                    "image",
+
+                    profilePicture.FileName);
+
+                var response = await client.PostAsync(
+
+                    "api/Images/profile-picture",
+
+                    content);
+
+                if (response.IsSuccessStatusCode)
+
+                {
+
+                    TempData["Success"] =
+
+                        "Profile picture uploaded successfully!";
+
+                }
+
+                else
+
+                {
+
+                    TempData["Error"] =
+
+                        await response.Content.ReadAsStringAsync();
+
+                }
+
+            }
+
+            catch (HttpRequestException)
+
+            {
+
+                TempData["Error"] =
+
+                    "Could not connect to the RaceDay API.";
+
+            }
+
+            return RedirectToAction("Profile");
+
+        }
+
+       
+
+        [HttpGet]
+
+        public async Task<IActionResult> ProfilePictureImage()
+
+        {
+
+            var client = CreateApiClient();
+
+            try
+
+            {
+
+                var response = await client.GetAsync(
+
+                    "api/Images/profile-picture");
+
+                if (!response.IsSuccessStatusCode)
+
+                    return NotFound();
+
+                var image =
+
+                    await response.Content.ReadAsByteArrayAsync();
+
+                var contentType =
+
+                    response.Content.Headers.ContentType?.MediaType
+
+                    ?? "application/octet-stream";
+
+                return File(image, contentType);
+
+            }
+
+            catch (HttpRequestException)
+
+            {
 
                 return NotFound();
 
-            bool hasRegistrations = await _db.Registrations
-
-                .AnyAsync(r => r.ParticipantID == id);
-
-            if (hasRegistrations)
-
-                return Conflict(
-
-                    "Remove the participant's registrations first.");
-
-            _db.Participants.Remove(participant);
-
-            await _db.SaveChangesAsync();
-
-            return NoContent();
+            }
 
         }
 
     }
 
 }
-

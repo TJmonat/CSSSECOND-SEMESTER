@@ -1,175 +1,451 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
 
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 
-using RaceDayAP1.Data;
+using RaceDayMVC.Models;
 
-using RaceDayAP1.Models;
+using System.Globalization;
 
-namespace RaceDayApi.Controllers;
+using System.Net;
 
-[ApiController]
+using System.Net.Http.Json;
 
-[Route("api/events")]
-
-public class EventsController : ControllerBase
+namespace RaceDayMVC.Controllers
 
 {
-private readonly RaceDayContext _db;
-public EventsController(RaceDayContext db)
 
-{
- _db = db;
-}
-[HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        var events = await _db.RaceEvents.AsNoTracking().ToListAsync();
-        return Ok(events);
-    }
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(string id)
+    [Authorize(Roles = "Organiser")]
 
-    {
-       var raceEvent = await _db.RaceEvents.FindAsync(id);
-
-        if (raceEvent == null)
-
-            return NotFound();
-
-        return Ok(raceEvent);
-
-    }
-
-
-    [HttpPost]
-
-    public async Task<IActionResult> Create(RaceEvent raceEvent)
+    public class EventsController : Controller
 
     {
 
-        if (string.IsNullOrWhiteSpace(raceEvent.Event_ID))
+        private readonly IHttpClientFactory _httpClientFactory;
 
-            return BadRequest("Event ID is required.");
+        public EventsController(IHttpClientFactory httpClientFactory)
 
-        if (raceEvent.Event_ID.Length > 13)
+        {
 
-            return BadRequest("Event ID cannot exceed 13 characters.");
+            _httpClientFactory = httpClientFactory;
 
-        if (await _db.RaceEvents.AnyAsync(
+        }
 
-            e => e.Event_ID == raceEvent.Event_ID))
+       
 
-            return Conflict("Event ID already exists.");
+        private HttpClient GetApiClient()
 
-        if (!await _db.EventCategories.AnyAsync(
+        {
 
-            c => c.Category_ID == raceEvent.CategoryID))
+            var client = _httpClientFactory.CreateClient("RaceDayAPI");
 
-            return BadRequest("The category does not exist.");
+            var apiCookie = HttpContext.Session.GetString("ApiCookie");
 
-        if (!await _db.EventOrganizers.AnyAsync(
+            if (!string.IsNullOrEmpty(apiCookie))
 
-            o => o.Event_Organizer_ID == raceEvent.EventOrganizerID))
+            {
 
-            return BadRequest("The organiser does not exist.");
+                client.DefaultRequestHeaders.TryAddWithoutValidation(
 
-        if (!await _db.Venues.AnyAsync(
+                    "Cookie", apiCookie);
 
-            v => v.Venue_ID == raceEvent.VenueID))
+            }
 
-            return BadRequest("The venue does not exist.");
+            return client;
 
-        _db.RaceEvents.Add(raceEvent);
+        }
 
-        await _db.SaveChangesAsync();
+        
+        [HttpGet]
 
-        return CreatedAtAction(
+        public IActionResult Create()
 
-            nameof(GetById),
+        {
 
-            new { id = raceEvent.Event_ID },
+            return View();
 
-            raceEvent);
+        }
 
-    }
+      
 
-    
+        [HttpPost]
 
-    [HttpPut("{id}")]
+        [ValidateAntiForgeryToken]
 
-    public async Task<IActionResult> Update(
+        public async Task<IActionResult> Create(EventViewModel model)
 
-        string id, RaceEvent updated)
+        {
 
-    {
+            if (!ModelState.IsValid)
 
-        var raceEvent = await _db.RaceEvents.FindAsync(id);
+                return View(model);
 
-        if (raceEvent == null)
+            var client = GetApiClient();
 
-            return NotFound();
+            var raceEvent = new
 
-        if (!await _db.EventCategories.AnyAsync(
+            {
 
-            c => c.Category_ID == updated.CategoryID))
+                Event_ID = model.Event_ID,
 
-            return BadRequest("The category does not exist.");
+                Event_Location = model.Event_Location,
 
-        if (!await _db.EventOrganizers.AnyAsync(
+                Event_Date = model.Event_Date,
 
-            o => o.Event_Organizer_ID == updated.EventOrganizerID))
+                CategoryID = model.CategoryID,
 
-            return BadRequest("The organiser does not exist.");
+                EventOrganizerID = model.EventOrganizerID,
 
-        if (!await _db.Venues.AnyAsync(
+                VenueID = model.VenueID
 
-            v => v.Venue_ID == updated.VenueID))
+            };
 
-            return BadRequest("The venue does not exist.");
+            var eventResponse = await client.PostAsJsonAsync(
 
-        raceEvent.Event_Location = updated.Event_Location;
+                "api/events", raceEvent);
 
-        raceEvent.Event_Date = updated.Event_Date;
+            if (!eventResponse.IsSuccessStatusCode)
 
-        raceEvent.CategoryID = updated.CategoryID;
+            {
 
-        raceEvent.EventOrganizerID = updated.EventOrganizerID;
+                ModelState.AddModelError("",
 
-        raceEvent.VenueID = updated.VenueID;
+                    "Could not create the event. Check your Category ID, Organiser ID and Venue ID.");
 
-        await _db.SaveChangesAsync();
+                return View(model);
 
-        return Ok(raceEvent);
+            }
 
-    }
+            var eventDetails = new EventDetailsViewModel
 
-    
-    [HttpDelete("{id}")]
+            {
 
-    public async Task<IActionResult> Delete(string id)
+                EventDetails_ID = Guid.NewGuid().ToString("N")[..13],
 
-    {
+                Event_ID = model.Event_ID,
 
-        var raceEvent = await _db.RaceEvents.FindAsync(id);
+                Event_Name = model.Event_Name ?? "",
 
-        if (raceEvent == null)
+                Event_Description = model.Event_Description,
 
-            return NotFound();
+                Event_Distance = model.Event_Distance?.ToString(
 
-        bool hasRegistrations = await _db.Registrations
+                    CultureInfo.InvariantCulture),
 
-            .AnyAsync(r => r.EventID == id);
+                Event_Type = model.Event_Type
 
-        if (hasRegistrations)
+            };
 
-            return Conflict("Remove the event registrations first.");
+            var detailsResponse = await client.PostAsJsonAsync(
 
-        _db.RaceEvents.Remove(raceEvent);
+                "api/eventdetails", eventDetails);
 
-        await _db.SaveChangesAsync();
+            if (!detailsResponse.IsSuccessStatusCode)
 
-        return NoContent();
+            {
+
+                await client.DeleteAsync(
+
+                    $"api/events/{Uri.EscapeDataString(model.Event_ID)}");
+
+                ModelState.AddModelError("",
+
+                    "The event was created, but its additional details could not be saved. Please check the event details and try again.");
+
+                return View(model);
+
+            }
+
+           
+
+            if (model.BannerImage != null &&
+
+                model.BannerImage.Length > 0)
+
+            {
+
+                using var formData = new MultipartFormDataContent();
+
+                using var imageStream =
+
+                    model.BannerImage.OpenReadStream();
+
+                using var imageContent =
+
+                    new StreamContent(imageStream);
+
+                imageContent.Headers.ContentType =
+
+                    new System.Net.Http.Headers.MediaTypeHeaderValue(
+
+                        model.BannerImage.ContentType);
+
+                formData.Add(
+
+                    imageContent,
+
+                    "image",
+
+                    model.BannerImage.FileName);
+
+                var imageResponse = await client.PostAsync(
+
+                    $"api/Images/event-banner/{Uri.EscapeDataString(model.Event_ID)}",
+
+                    formData);
+
+                if (!imageResponse.IsSuccessStatusCode)
+
+                {
+
+                    await client.DeleteAsync(
+
+                        $"api/eventdetails/{Uri.EscapeDataString(model.Event_ID)}");
+
+                    await client.DeleteAsync(
+
+                        $"api/events/{Uri.EscapeDataString(model.Event_ID)}");
+
+                    ModelState.AddModelError("",
+
+                        "The event banner could not be uploaded. The event was not saved. Please try again.");
+
+                    return View(model);
+
+                }
+
+            }
+
+            TempData["Success"] =
+
+                "Event and banner created successfully!";
+
+            return RedirectToAction("Index", "Organiser");
+
+        }
+
+       
+
+        [HttpGet]
+
+        public async Task<IActionResult> Edit(string id)
+
+        {
+
+            var client = GetApiClient();
+
+            var raceEvent = await client.GetFromJsonAsync<EventViewModel>(
+
+                $"api/events/{Uri.EscapeDataString(id)}");
+
+            if (raceEvent == null)
+
+                return NotFound();
+
+            var details = await client.GetFromJsonAsync<EventDetailsViewModel>(
+
+                $"api/eventdetails/{Uri.EscapeDataString(id)}");
+
+            if (details != null)
+
+            {
+
+                raceEvent.Event_Name = details.Event_Name;
+
+                raceEvent.Event_Description = details.Event_Description;
+
+                raceEvent.Event_Type = details.Event_Type;
+
+                if (decimal.TryParse(
+
+                    details.Event_Distance,
+
+                    NumberStyles.Number,
+
+                    CultureInfo.InvariantCulture,
+
+                    out decimal distance))
+
+                {
+
+                    raceEvent.Event_Distance = distance;
+
+                }
+
+            }
+
+            return View(raceEvent);
+
+        }
+
+        
+
+        [HttpPost]
+
+        [ValidateAntiForgeryToken]
+
+        public async Task<IActionResult> Edit(EventViewModel model)
+
+        {
+
+            if (!ModelState.IsValid)
+
+                return View(model);
+
+            var client = GetApiClient();
+
+            var updatedEvent = new
+
+            {
+
+                Event_ID = model.Event_ID,
+
+                Event_Location = model.Event_Location,
+
+                Event_Date = model.Event_Date,
+
+                CategoryID = model.CategoryID,
+
+                EventOrganizerID = model.EventOrganizerID,
+
+                VenueID = model.VenueID
+
+            };
+
+            var eventResponse = await client.PutAsJsonAsync(
+
+                $"api/events/{Uri.EscapeDataString(model.Event_ID)}",
+
+                updatedEvent);
+
+            if (!eventResponse.IsSuccessStatusCode)
+
+            {
+
+                ModelState.AddModelError("",
+
+                    "Could not update the event. Check your Category ID, Organiser ID and Venue ID.");
+
+                return View(model);
+
+            }
+
+            var eventDetails = new EventDetailsViewModel
+
+            {
+
+                EventDetails_ID = Guid.NewGuid().ToString("N")[..13],
+
+                Event_ID = model.Event_ID,
+
+                Event_Name = model.Event_Name ?? "",
+
+                Event_Description = model.Event_Description,
+
+                Event_Distance = model.Event_Distance?.ToString(
+
+                    CultureInfo.InvariantCulture),
+
+                Event_Type = model.Event_Type
+
+            };
+
+            var detailsResponse = await client.PutAsJsonAsync(
+
+                $"api/eventdetails/{Uri.EscapeDataString(model.Event_ID)}",
+
+                eventDetails);
+
+            if (detailsResponse.StatusCode == HttpStatusCode.NotFound)
+
+            {
+
+                detailsResponse = await client.PostAsJsonAsync(
+
+                    "api/eventdetails", eventDetails);
+
+            }
+
+            if (!detailsResponse.IsSuccessStatusCode)
+
+            {
+
+                ModelState.AddModelError("",
+
+                    "The event was updated, but its additional details could not be saved.");
+
+                return View(model);
+
+            }
+
+            TempData["Success"] = "Event updated successfully!";
+
+            return RedirectToAction("Index", "Organiser");
+
+        }
+
+        
+
+        [HttpPost]
+
+        [ValidateAntiForgeryToken]
+
+        public async Task<IActionResult> Delete(string id)
+
+        {
+
+            var client = GetApiClient();
+
+            var detailsResponse = await client.DeleteAsync(
+
+                $"api/eventdetails/{Uri.EscapeDataString(id)}");
+
+            if (!detailsResponse.IsSuccessStatusCode &&
+
+                detailsResponse.StatusCode != HttpStatusCode.NotFound)
+
+            {
+
+                TempData["Error"] =
+
+                    "Could not delete the event details.";
+
+                return RedirectToAction("Index", "Organiser");
+
+            }
+
+            var response = await client.DeleteAsync(
+
+                $"api/events/{Uri.EscapeDataString(id)}");
+
+            if (response.IsSuccessStatusCode)
+
+            {
+
+                TempData["Success"] = "Event deleted successfully!";
+
+            }
+
+            else if (response.StatusCode == HttpStatusCode.Conflict)
+
+            {
+
+                TempData["Error"] =
+
+                    "This event cannot be deleted because it has registrations.";
+
+            }
+
+            else
+
+            {
+
+                TempData["Error"] = "Could not delete the event.";
+
+            }
+
+            return RedirectToAction("Index", "Organiser");
+
+        }
 
     }
 
